@@ -1,4 +1,7 @@
 #include <WiFi.h>
+extern "C" {
+  #include "esp_wpa2.h" // Include the header for the esp_wpa2 library
+}
 #include <DHT.h>
 #include <HTTPClient.h>
 
@@ -10,7 +13,8 @@ DHT dht1(DHTPIN1, DHTTYPE);
 DHT dht2(DHTPIN2, DHTTYPE);
 
 const char* ssid = "testwifi"; // Replace with your WiFi SSID
-const char* password = "testwifi"; // Replace with your WiFi password
+const char* username = "testuser"; // Replace with your WiFi username
+const char* password = "testpassword"; // Replace with your WiFi password
 const char* server = "192.168.43.1"; // Replace with your server IP address
 
 void setup() {
@@ -18,7 +22,16 @@ void setup() {
   delay(1000);
 
   // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_STA);
+
+  esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)username, strlen(username));
+  esp_wifi_sta_wpa2_ent_set_username((uint8_t *)username, strlen(username));
+  esp_wifi_sta_wpa2_ent_set_password((uint8_t *)password, strlen(password));
+  esp_wpa2_config_t config = WPA2_CONFIG_INIT_DEFAULT();
+  esp_wifi_sta_wpa2_ent_enable(&config);
+
+  WiFi.begin(ssid);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
@@ -30,7 +43,7 @@ void setup() {
 }
 
 void loop() {
-  delay(60000); // Wait for 1 minute before sending new data
+  delay(1000); //60000 Wait for 1 minute before sending new data
 
   // Reading sensor values
   float temperature1 = dht1.readTemperature();
@@ -72,4 +85,3 @@ String getFormattedTimestamp() {
   
   return String(timestamp);
 }
-
